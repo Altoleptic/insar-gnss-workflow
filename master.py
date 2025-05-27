@@ -7,24 +7,29 @@ import time
 data_dir = Path("C:/insar_gnss_data")
 os.environ["DATA_DIR"] = str(data_dir)
 
-# Set global parameters (these can be controlled from master.py)
+# Set global parameters
 os.environ["MIN_TEMPORAL_COHERENCE"] = "0.7"    # Minimum temporal coherence threshold
 os.environ["INSAR_RADIUS"] = "500"              # Radius in m for InSAR averaging
-os.environ["GRID_SIZE_KM"] = "0.5"              # Grid size in km for plot_variability.py
+
+# Settings for grid_amplitude_analysis.py
+os.environ["GRID_SIZE_KM"] = "0.5"              # Grid size in km (used when MULTI_RESOLUTION=False)
+os.environ["USE_DETRENDED"] = "True"            # Whether to detrend time series before amplitude calculation
+os.environ["HALF_AMPLITUDE"] = "True"           # Whether to use scientific amplitude definition (max-min)/2
+os.environ["MULTI_RESOLUTION"] = "True"         # Whether to create plots at multiple resolutions
+os.environ["GRID_SIZES"] = "0.25, 0.5, 1.0, 1.5, 2.5, 5.0"  # Comma-separated list of grid sizes in km to use when MULTI_RESOLUTION=True
 
 # Set file names for INSAR and the stations_list.
-# These values will be combined with DATA_DIR in your scripts.
 os.environ["INSAR_FILE"] = "EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A.csv"
 os.environ["STATIONS_FILE"] = "stations_list"
 
-# List of scripts to run (uncomment any additional scripts as needed)
+# List of scripts to run (uncomment any additional scripts as needed but beware of dependencies)
 scripts = [
     "gnss_3d_vels.py",
     "filter_insar_save_parameters.py",
     "fit_plane_correct_insar.py",
     "gnss_los_displ.py",
     "plot_combined_time_series.py",
-    "plot_variability.py"
+    "grid_amplitude_analysis.py"
 ]
 
 log_file = "workflow.log"

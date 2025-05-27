@@ -26,7 +26,7 @@ The main script that orchestrates the entire workflow. Controls parameters via e
 ### Visualization Scripts
 
 - **`plot_combined_time_series.py`**: Plots time series of both InSAR and GNSS data for comparison.
-- **`plot_variability.py`**: Analyzes and visualizes seasonal amplitudes using a grid-based approach, with optional detrending.
+- **`grid_amplitude_analysis.py`**: Analyzes and visualizes seasonal amplitudes using a grid-based approach, with optional detrending and enhanced visualization features. Supports multi-resolution analysis to compare spatial patterns across different grid sizes.
 
 ## Configuration
 
@@ -36,6 +36,10 @@ All parameters are set in `master.py` as environment variables:
 - **`MIN_TEMPORAL_COHERENCE`**: Minimum temporal coherence threshold (default: 0.7)
 - **`INSAR_RADIUS`**: Radius in meters for InSAR averaging around GNSS stations (default: 500m)
 - **`GRID_SIZE_KM`**: Grid size in km for amplitude calculations (default: 0.5km)
+- **`USE_DETRENDED`**: Whether to detrend time series before amplitude calculation (default: True)
+- **`HALF_AMPLITUDE`**: Whether to use scientific amplitude definition (max-min)/2 (default: True)
+- **`MULTI_RESOLUTION`**: Whether to create plots at multiple resolutions (default: False)
+- **`GRID_SIZES`**: Comma-separated list of grid sizes in km to use when MULTI_RESOLUTION=True (default: "0.25, 0.5, 1.0, 2.0, 5.0")
 - **`INSAR_FILE`**: Name of the InSAR data file
 - **`STATIONS_FILE`**: Name of the GNSS stations list file
 
@@ -73,21 +77,25 @@ The workflow generates:
 
 ## Grid-based Amplitude Analysis
 
-The amplitude analysis in `plot_variability.py`:
-- Creates a grid with cells approximately 1x1 km (configurable via `GRID_SIZE_KM`)
-- Calculates the median amplitude (max-min of time series) per cell
-- Optionally detrends time series to focus on seasonal patterns
+The amplitude analysis in `grid_amplitude_analysis.py`:
+- Creates a grid with configurable cell size via `GRID_SIZE_KM`
+- Calculates the median amplitude (max-min)/2 or peak-to-peak of time series per cell
+- Optionally detrends time series to focus on seasonal patterns (controlled by `USE_DETRENDED`)
 - Visualizes the result with GNSS stations overlaid
+- Can analyze and compare multiple spatial resolutions (set `MULTI_RESOLUTION=True`)
+- Creates comparison plots showing amplitude statistics vs. grid resolution
+- Provides consistent visualization across different grid sizes with improved station markers
+- Features optimized subplot layouts to prevent element overlap and reduce white space
 
 Note about grid cells: Due to the nature of longitude/latitude coordinates, grid cells that are square in degrees appear rectangular in kilometers, especially away from the central latitude.
 
 ## Dependencies
 
 - Python 3.7+
-- numpy
-- pandas
-- matplotlib
-- scipy
+- numpy >= 1.20.0
+- pandas >= 1.3.0
+- matplotlib >= 3.4.0 (with GridSpec and patheffects support)
+- scipy >= 1.7.0
 
 ## Example Workflow
 
