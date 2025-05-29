@@ -151,7 +151,7 @@ def plot_grid_amplitude(grid_amplitude, lon_bins, lat_bins, vmin, vmax, DATA_DIR
     
     # Create mesh grid with adjusted coordinates
     X, Y = np.meshgrid(adjusted_lon_bins, adjusted_lat_bins)
-      # Use pcolormesh with consistent coordinates and grid data dimensions
+    # Use pcolormesh with consistent coordinates and grid data dimensions
     # Add interpolation for smoother appearance especially for larger grid sizes
     cax = ax.pcolormesh(X, Y, masked_grid, 
                      cmap='viridis', vmin=vmin, vmax=vmax, 
@@ -260,7 +260,7 @@ def create_multi_resolution_comparison(results, data_dir, use_detrended, half_am
         stations_df = pd.read_csv(stations_file, sep=r'\s+')
     else:
         stations_df = None
-      # Sort results by grid size
+    # Sort results by grid size
     results = sorted(results, key=lambda x: x['grid_size_km'])    # Create a compact figure with 2×3 grid layout for the resolution comparison
     fig = plt.figure(figsize=(21, 12))
     

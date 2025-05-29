@@ -1,3 +1,18 @@
+"""
+Spatial Alignment Script for InSAR and GNSS Data
+
+This script performs spatial alignment between InSAR and GNSS data by fitting a correction plane.
+It calculates LOS magnitude differences between the data sources and applies a spatial correction
+to align InSAR measurements with GNSS observations, reducing systematic spatial biases.
+
+Features:
+- Line-of-sight (LOS) difference calculation between GNSS and InSAR
+- Plane fitting to model spatial bias patterns
+- Visual representation of alignment results
+- Automated correction application to InSAR data
+- Diagnostic plots of before/after correction states
+"""
+
 import pandas as pd
 import numpy as np
 from scipy.optimize import least_squares
@@ -6,7 +21,6 @@ import os
 import matplotlib.patheffects as path_effects
 from pathlib import Path
 
-# Setze Defaultwerte für Umgebungsvariablen, falls sie nicht gesetzt sind
 if "DATA_DIR" not in os.environ:
     os.environ["DATA_DIR"] = str(Path("C:/insar_gnss_data"))
 if "INSAR_FILE" not in os.environ:
@@ -72,7 +86,6 @@ def plot_spatial_correction(insar_df, spatial_correction, stations_file):
     os.makedirs(plots_dir, exist_ok=True)
     stations_df = pd.read_csv(stations_file, delim_whitespace=True)
 
-    # Farbskala auf 5. und 95. Perzentil begrenzen
     vmin = np.quantile(spatial_correction, 0.05)
     vmax = np.quantile(spatial_correction, 0.95)
 
@@ -90,8 +103,7 @@ def plot_spatial_correction(insar_df, spatial_correction, stations_file):
     ax.set_title("Spatial Distribution of Correction Values")
     ax.legend(["GNSS Stations"], loc="upper left")
     ax.set_aspect('equal')
-
-    # Farbskala unter dem Plot
+    
     cbar = fig.colorbar(scatter, ax=ax, orientation='horizontal', pad=0.15)
     cbar.set_label("Spatial Correction Value")
 

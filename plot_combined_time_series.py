@@ -1,3 +1,18 @@
+"""
+Combined Time Series Visualization Script
+
+This script creates comparative visualizations of InSAR and GNSS time series data.
+It generates plots showing both data sources together, allowing direct comparison
+of displacement patterns, trends, and seasonal variations between measurement techniques.
+
+Features:
+- Side-by-side visualization of InSAR and GNSS time series
+- Automatic data alignment to common time references
+- Statistical comparison between measurement techniques
+- Support for seasonal pattern analysis
+- Multiple visualization formats (raw, detrended, normalized)
+"""
+
 import os
 import glob
 import pandas as pd

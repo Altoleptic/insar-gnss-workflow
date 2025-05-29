@@ -1,3 +1,18 @@
+"""
+Master Control Script for InSAR-GNSS Processing Workflow
+
+This script orchestrates the complete InSAR and GNSS data processing workflow.
+It sets environment variables, defines processing parameters, and executes
+all analysis scripts in the correct order, ensuring proper data flow between steps.
+
+Features:
+- Centralized parameter configuration via environment variables
+- Automated sequential execution of processing scripts
+- Comprehensive logging of all processing steps
+- Error handling and status reporting
+- Support for multi-resolution analysis configuration
+"""
+
 import os
 import subprocess
 from pathlib import Path

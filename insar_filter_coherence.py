@@ -1,3 +1,18 @@
+"""
+InSAR Coherence Filtering Script
+
+This script filters InSAR data based on temporal coherence values.
+It removes low-quality measurements by setting a minimum coherence threshold,
+producing a cleaned dataset suitable for further analysis.
+
+Features:
+- Temporal coherence-based filtering
+- Configurable coherence threshold
+- Automatic output file naming based on threshold
+- Input validation and error handling
+- Statistical reporting of filtered results
+"""
+
 import pandas as pd
 
 original_file = "EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A.csv"

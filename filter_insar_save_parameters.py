@@ -1,3 +1,18 @@
+"""
+InSAR Filtering and Parameter Extraction Script
+
+This script filters InSAR data points based on temporal coherence and proximity to GNSS stations.
+It processes spatial relationships between GNSS stations and InSAR measurements, extracting
+relevant parameters and saving filtered data for further analysis.
+
+Features:
+- Coherence-based filtering of InSAR points
+- Radius-based selection around GNSS stations
+- Vectorized Haversine distance calculations for efficiency
+- Line-of-sight (LOS) component normalization
+- Parameter extraction for GNSS-InSAR integration
+"""
+
 import pandas as pd
 import numpy as np
 import os
@@ -9,14 +24,14 @@ if not data_dir:
     print("Error: DATA_DIR environment variable is not set.")
     exit(1)
 
-data_dir = os.path.abspath(data_dir)  # Ensure proper formatting
+data_dir = os.path.abspath(data_dir)
 station_list_file = os.path.join(data_dir, os.getenv("STATIONS_FILE", "stations_list"))
 output_file = os.path.join(data_dir, "parameters.csv")
 
 # Define the Haversine formula using NumPy for vectorized calculations
 def haversine_distance_vectorized(lat1, lon1, lat2, lon2):
     """Calculate the geodetic distance between two points."""
-    R = 6371.0  # Earth's radius in km
+    R = 6371.0
 
     lat1, lon1 = np.radians(lat1), np.radians(lon1)
     lat2, lon2 = np.radians(lat2), np.radians(lon2)

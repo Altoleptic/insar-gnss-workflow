@@ -1,3 +1,18 @@
+"""
+GNSS Line-of-Sight Displacement Calculation Script
+
+This script projects GNSS displacement measurements into the satellite's line-of-sight (LOS) direction.
+It processes 3D GNSS data (North, East, Up) and calculates equivalent LOS values using
+the InSAR geometry components, enabling direct comparison with InSAR measurements.
+
+Features:
+- Automatic processing of multiple GNSS stations
+- Projection of 3D displacements into LOS direction
+- Compatible output format with InSAR time series
+- Handling of various time formats
+- Support for batch processing of stations
+"""
+
 import pandas as pd
 import os
 import glob

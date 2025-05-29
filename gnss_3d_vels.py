@@ -1,3 +1,18 @@
+"""
+GNSS 3D Velocity Calculation and Visualization Script
+
+This script processes GNSS time series data to calculate 3D velocities (North, East, Up).
+It performs linear regression on station displacement data to determine velocity trends
+and creates visualizations of displacement time series with fitted trend lines.
+
+Features:
+- Automated processing of multiple GNSS stations
+- 3D velocity calculation using linear regression
+- Time series visualization with trend lines
+- Conversion between different date formats (MJD to standard dates)
+- Statistical analysis of station movements
+"""
+
 import pandas as pd
 import numpy as np
 from scipy.stats import linregress
