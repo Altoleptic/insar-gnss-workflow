@@ -1,0 +1,77 @@
+import os
+import subprocess
+import time
+from pathlib import Path
+from datetime import timedelta
+
+# Set global data directory as an environment variable
+data_dir = Path("C:/insar_gnss_data")
+os.environ["DATA_DIR"] = str(data_dir)
+
+# Set global parameters (these can be controlled from master.py)
+os.environ["MIN_TEMPORAL_COHERENCE"] = "0.7"  # Minimum temporal coherence threshold
+os.environ["INSAR_RADIUS"] = "250"            # Radius in meters for InSAR averaging
+os.environ["USE_NNR_CORRECTED"] = "True"      # Whether to use NNR-corrected GNSS files
+os.environ["GNSS_PROVIDER"] = "gfz"           # GNSS data provider ('gfz', 'usgs', etc.)
+
+# Set file names for INSAR and the stations_list.
+# These values will be combined with DATA_DIR in your scripts.
+os.environ["INSAR_FILE"] = "EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A.csv"
+os.environ["STATIONS_FILE"] = "stations_list"
+
+# List of scripts to run (uncomment any additional scripts as needed)
+scripts = [
+    "gnss_3d_vels.py",
+    "remove_gnss_rotation.py",
+    "filter_insar_save_parameters.py",
+    "fit_plane_correct_insar.py",
+    "gnss_los_displ.py",
+    "plot_combined_time_series.py",
+    "grid_amplitude_analysis.py",
+]
+
+log_file = "workflow.log"
+
+def run_script(script):
+    """Executes a script, logs output, and confirms success."""
+    try:
+        with open(log_file, "a") as log:
+            result = subprocess.run(
+                ["python", script],
+                capture_output=True,
+                text=True,
+                env=os.environ
+            )
+            log.write(f"Running {script}...\n")
+            log.write(result.stdout)
+            log.write(result.stderr)
+            log.write("\n" + "-" * 50 + "\n")
+        
+        if result.returncode != 0:
+            print(f"Error in {script}, see {log_file}")
+            return False
+        
+        print(f"{script} executed successfully!")
+        return True
+    
+    except Exception as e:
+        print(f"Error while executing {script}: {e}")
+        return False
+
+# Main workflow: execute each script in order and abort if any fail.
+start_time = time.time()
+print(f"Starting workflow at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+for script in scripts:
+    script_start = time.time()
+    success = run_script(script)
+    script_duration = time.time() - script_start
+    print(f"{script} took {timedelta(seconds=int(script_duration))}")
+    
+    if not success:
+        print("Workflow aborted due to script failure.")
+        break
+
+total_duration = time.time() - start_time
+print(f"Workflow completed in {timedelta(seconds=int(total_duration))}")
+print(f"Finished at {time.strftime('%Y-%m-%d %H:%M:%S')}")
