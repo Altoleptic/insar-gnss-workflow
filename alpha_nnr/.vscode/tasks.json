@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Launcher",
+            "type": "shell",
+            "command": "${workspaceFolder}\\launcher.bat",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "clear": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -6,15 +6,17 @@ This repository contains a comprehensive suite of Python scripts for processing,
 
 The workflow addresses several key challenges in GNSS-InSAR integration:
 
-1. **Spatial Alignment**: Corrects spatial biases between InSAR and GNSS measurements using plane fitting techniques.
-2. **Temporal Analysis**: Provides tools for comparing time series and analyzing seasonal patterns.
-3. **Visualization**: Offers comprehensive visualization capabilities for comparing data sources and understanding spatial patterns.
-4. **Extensibility**: Uses a modular approach for data loading to support different data providers.
+1. **Reference Frame Consistency**: Removes net rotation from GNSS data to establish a consistent local reference frame.
+2. **Spatial Alignment**: Corrects spatial biases between InSAR and GNSS measurements using plane fitting techniques.
+3. **Temporal Analysis**: Provides tools for comparing time series and analyzing seasonal patterns.
+4. **Visualization**: Offers comprehensive visualization capabilities for comparing data sources and understanding spatial patterns.
+5. **Extensibility**: Uses a modular approach for data loading to support different data providers.
 
 ### Key Features
 
 - **GNSS Processing**:
   - 3D velocity calculation from time series
+  - Net Rotation Removal (NNR) correction
   - Line-of-Sight projection for InSAR compatibility
 
 - **InSAR Processing**:
@@ -45,6 +47,7 @@ The main script that orchestrates the entire workflow. Controls parameters via e
 ### Data Processing Scripts
 
 - **`gnss_3d_vels.py`**: Processes GNSS 3D velocities.
+- **`remove_gnss_rotation.py`**: Estimates and removes net rotation from GNSS velocity data using geodetic coordinates. Creates a local, internally consistent reference frame and corrects GNSS displacement time series.
 - **`filter_insar_save_parameters.py`**: Filters InSAR data based on temporal coherence and saves parameters.
 - **`fit_plane_correct_insar.py`**: Fits a plane to the InSAR data for spatial correction, aligning InSAR with GNSS observations.
 - **`gnss_los_displ.py`**: Calculates GNSS displacements in the Line-of-Sight direction.
