@@ -1,6 +1,17 @@
 # InSAR and GNSS Data Integration Workflow
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/shturboy/insar-gnss-workflow)
+
 This repository contains a comprehensive suite of Python scripts for processing, aligning, analyzing, and visualizing InSAR and GNSS displacement data. The workflow focuses on creating a spatially and temporally consistent dataset by removing systemic biases and providing robust visualization tools.
+
+## Versions
+
+This repository includes two versions of the workflow:
+
+- **Stable (1.0.0)**: Main directory - A production-ready version without Net Rotation Removal
+- **Alpha**: In the `alpha_nnr` directory - Includes experimental Net Rotation Removal functionality
+
+See [CHANGELOG.md](CHANGELOG.md) for details on the differences between versions.
 
 ## Overview
 
