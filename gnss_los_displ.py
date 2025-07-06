@@ -29,9 +29,9 @@ if not data_dir:
     print("Error: DATA_DIR environment variable is not set.")
     exit(1)
 
-# Check if we should use NNR-corrected files
-use_nnr = os.getenv("USE_NNR_CORRECTED", "True").lower() == "true"
-print(f"Using NNR-corrected files: {use_nnr}")
+# Check advanced file processing setting
+use_nnr = os.getenv("USE_NNR_CORRECTED", "False").lower() == "true"
+print(f"Advanced file processing enabled: {use_nnr}")
 
 # Ensure proper path formatting by converting to absolute path
 data_dir = os.path.abspath(data_dir)
@@ -166,14 +166,15 @@ def process_stations():
         station_name = first_word
         print(f"Processing station {station_name}...")
         
-        # Determine the input file pattern based on whether to use NNR-corrected files
+        # Determine the input file pattern
+        # Check for advanced processing mode
         if use_nnr:
             gnss_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*_NNR.txt")
             gnss_files = glob.glob(gnss_pattern)
             
-            # If no NNR files found, fall back to original files
+            # If no specially processed files found, fall back to standard files
             if not gnss_files:
-                print(f"No NNR-corrected file found for {station_name}, using original file")
+                print(f"No specially processed file found for {station_name}, using standard file")
                 gnss_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*.txt")
                 gnss_files = glob.glob(gnss_pattern)
         else:
@@ -189,7 +190,7 @@ def process_stations():
         input_file = gnss_files[0]
         
         # Determine the output file name
-        # If we're using an NNR-corrected file, output should preserve the NNR suffix
+        # Preserve any existing suffix in the filename
         if "_NNR" in input_file:
             output_file = input_file.replace("_NNR.txt", "_NNR_LOS.txt")
         else:

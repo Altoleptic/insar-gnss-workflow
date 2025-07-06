@@ -1,17 +1,13 @@
 # InSAR and GNSS Data Integration Workflow
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/shturboy/insar-gnss-workflow)
-
 This repository contains a comprehensive suite of Python scripts for processing, aligning, analyzing, and visualizing InSAR and GNSS displacement data. The workflow focuses on creating a spatially and temporally consistent dataset by removing systemic biases and providing robust visualization tools.
 
-## Versions
+## Repository Structure
 
-This repository includes two versions of the workflow:
+This repository is organized as follows:
 
-- **Stable (1.0.0)**: Main directory - A production-ready version without Net Rotation Removal
-- **Alpha**: In the `alpha_nnr` directory - Includes experimental Net Rotation Removal functionality
-
-See [CHANGELOG.md](CHANGELOG.md) for details on the differences between versions.
+- **Main directory**: The production-ready, standard version
+- **`alpha_nnr` directory**: Contains an experimental version with additional functionality
 
 ## Overview
 
@@ -107,7 +103,7 @@ All parameters are set in `master.py` as environment variables:
 - **`DATA_DIR`**: Path to the data directory (default: "C:/insar_gnss_data")
 - **`MIN_TEMPORAL_COHERENCE`**: Minimum temporal coherence threshold (default: 0.7)
 - **`INSAR_RADIUS`**: Radius in meters for InSAR averaging around GNSS stations (default: 250m)
-- **`USE_NNR_CORRECTED`**: Whether to use NNR-corrected GNSS files (default: True)
+- **`USE_NNR_CORRECTED`**: Advanced setting for GNSS file processing (default: False)
 - **`GNSS_PROVIDER`**: GNSS data provider to use ('gfz', 'usgs', etc.) (default: 'gfz')
 - **`INSAR_FILE`**: Name of the InSAR CSV file in the data directory
 - **`STATIONS_FILE`**: Name of the stations list file in the data directory
@@ -190,24 +186,16 @@ For very large datasets, you may need to adjust batch sizes or processing parame
 ## Output
 
 The workflow generates:
-- Net-rotation-corrected GNSS data with _NNR suffix
 - LOS-projected GNSS data (with _LOS suffix)
 - Filtered and spatially corrected InSAR data files
-- Saved rotation vector (omega) in rotation_vector_omega.txt
 - Various plots in the `plots` directory:
   - Combined time series plots showing GNSS and InSAR data
-  - Time series plots before/after net rotation correction
   - Spatial correction (plane fitting) visualizations
   - Grid-based amplitude maps showing seasonal patterns
 
-## Net Rotation Removal
+# Advanced Features
 
-The `remove_gnss_rotation.py` script provides tools for:
-- Converting geodetic coordinates to Earth-Centered, Earth-Fixed (ECEF) coordinates
-- Estimating rotation vector (omega) using least-squares optimization
-- Correcting both GNSS velocities and displacement time series for net rotation
-- Creating visualizations of before/after corrections
-- Saving corrected time series with _NNR suffix for use in downstream analysis
+See the experimental version in the `alpha_nnr` directory for additional features that may be incorporated in future releases.
 
 ## Grid-based Amplitude Analysis
 

@@ -34,7 +34,7 @@ os.environ["DATA_DIR"] = str(data_dir)
 # These parameters affect how the scripts operate - adjust as needed for your dataset
 os.environ["MIN_TEMPORAL_COHERENCE"] = "0.7"  # Minimum temporal coherence threshold (0-1)
 os.environ["INSAR_RADIUS"] = "250"            # Radius in meters for InSAR point averaging around GNSS stations
-os.environ["USE_NNR_CORRECTED"] = "False"     # Set to False - NNR functionality not included in this release
+os.environ["USE_NNR_CORRECTED"] = "False"     # Standard setting for stable release
 os.environ["GNSS_PROVIDER"] = "gfz"           # GNSS data provider ('gfz', 'usgs', etc.)
 
 # Set file names for INSAR and the stations_list.
