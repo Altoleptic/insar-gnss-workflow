@@ -18,7 +18,7 @@ import numpy as np   # Numerical operations
 import os           # File and directory operations
 
 # Get DATA_DIR from environment variable
-data_dir = os.getenv("DATA_DIR")
+data_dir = os.getenv("DATA_DIR", "C:\\insar_gnss_data")
 
 if not data_dir:
     print("Error: DATA_DIR environment variable is not set.")
@@ -129,10 +129,10 @@ def main():
     gnss_stations_df = pd.read_csv(station_list_file, sep=r'\s+')
     gnss_stations = gnss_stations_df.to_dict(orient="records")
 
-    insar_file = os.path.join(data_dir, os.getenv("INSAR_FILE", "default_insar.csv"))
+    insar_file = os.path.join(data_dir, os.getenv("INSAR_FILE", "EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A.csv"))
     insar_data = pd.read_csv(insar_file)
 
-    radius_km = int(os.getenv("INSAR_RADIUS", "500")) / 1000
+    radius_km = int(os.getenv("INSAR_RADIUS", "250")) / 1000
     coherence_threshold = float(os.getenv("MIN_TEMPORAL_COHERENCE", "0.7"))
 
     filtered_data = filter_insar_points_by_station(gnss_stations, insar_data, radius_km, coherence_threshold)

@@ -28,6 +28,7 @@ flowchart TD
     INPUT2 --> B4["3\. Spatial Alignment - fit_plane_correct_insar.py"]
     PARAMS3 --> B4
     B4 --> ALIGNED_INSAR["InSAR Aligned CSV"]
+    B4 --> PLANE_STATS["R² and Plane Coefficients"]
     
     %% Integration Steps (Bottom)
     PARAMS1 --> B5["4\. LOS Projection - gnss_los_displ.py"]
@@ -36,6 +37,7 @@ flowchart TD
     
     ALIGNED_INSAR --> B6["5\. Visualization - plot_combined_time_series.py"]
     LOS_FILES --> B6
+    PLANE_STATS --> B6
     B6 --> PLOTS["Combined Plots"]
     
     %% Optional Analysis
@@ -45,7 +47,6 @@ flowchart TD
     %% Auxiliary input (side)
     INPUT3["stations file"]
     INPUT3 -.-> B1
-    INPUT3 -.-> B2
     INPUT3 -.-> B4
     INPUT3 -.-> B5
     INPUT3 -.-> B6
@@ -55,17 +56,15 @@ flowchart TD
     INPUT2:::input
     INPUT3:::input
     B1:::script
-    B2:::script
     B3:::script
     B4:::script
     B5:::script
     B6:::script
     B7:::script
     PARAMS1:::data
-    PARAMS2:::data
     PARAMS3:::data
-    NNR_FILES:::data
     ALIGNED_INSAR:::data
+    PLANE_STATS:::data
     LOS_FILES:::data
     PLOTS:::output
     GRID_PLOTS:::output
@@ -96,7 +95,6 @@ flowchart TD
     B1 --> B1_OUT[parameters.csv with GNSS velocities]
     B1 --> B1_PLOT[Displacement plots]
     
-    %% Step 2: Net Rotation Removal
     %% Step 2: InSAR Filtering
     A3 --> B3[Step 2: filter insar save parameters script]
     B3 --> B3_OUT[parameters.csv updated with LOS]
@@ -106,7 +104,8 @@ flowchart TD
     A1 --> B4
     B3_OUT --> B4
     B4 --> B4_OUT[InSAR Aligned CSV]
-    B4 --> B4_PLOT[Spatial correction plot]
+    B4 --> B4_PLOT[Spatial correction plot with R²]
+    B4 --> B4_PARAMS[parameters.csv with plane coefficients & R²]
     
     %% Step 4: GNSS LOS Projection
     B1_OUT --> B5[Step 4: gnss los displ script]
@@ -117,6 +116,7 @@ flowchart TD
     %% Step 5: Time Series Visualization
     B4_OUT --> B6[Step 5: plot combined time series script]
     B5_OUT --> B6
+    B4_PARAMS --> B6
     A1 --> B6
     B6 --> B6_OUT1[Global velocity maps]
     B6 --> B6_OUT2[Station velocity maps]
@@ -128,7 +128,6 @@ flowchart TD
     
     %% Master Controller
     MASTER[master.py Workflow Controller] -.-> B1
-    MASTER -.-> B2
     MASTER -.-> B3
     MASTER -.-> B4
     MASTER -.-> B5
@@ -138,7 +137,6 @@ flowchart TD
     %% Output Directory
     PLOTS[plots directory]
     B1_PLOT --> PLOTS
-    B2_PLOT --> PLOTS
     B4_PLOT --> PLOTS
     B6_OUT1 --> PLOTS
     B6_OUT2 --> PLOTS
@@ -153,9 +151,9 @@ flowchart TD
     classDef controller fill:#FCE4EC,stroke:#C2185B,stroke-width:3px,color:#000
     
     class A,A1,A2,A3 inputData
-    class B1,B2,B3,B4,B5,B6,B7 script
-    class B1_OUT,B2_OUT1,B2_OUT2,B2_OUT3,B3_OUT,B4_OUT,B5_OUT dataFile
-    class B1_PLOT,B2_PLOT,B4_PLOT,B6_OUT1,B6_OUT2,B6_OUT3,B7_OUT,PLOTS plot
+    class B1,B3,B4,B5,B6,B7 script
+    class B1_OUT,B3_OUT,B4_OUT,B4_PARAMS,B5_OUT dataFile
+    class B1_PLOT,B4_PLOT,B6_OUT1,B6_OUT2,B6_OUT3,B7_OUT,PLOTS plot
     class MASTER controller
 ```
 
@@ -165,7 +163,7 @@ The workflow follows this strict sequential order:
 
 1. **`gnss_3d_vels.py`** - Calculate 3D velocities from GNSS time series
 2. **`filter_insar_save_parameters.py`** - Filter InSAR data and extract LOS parameters
-3. **`fit_plane_correct_insar.py`** - Align InSAR data spatially with GNSS using plane correction
+3. **`fit_plane_correct_insar.py`** - Align InSAR data spatially with GNSS using plane correction with R² calculation
 4. **`gnss_los_displ.py`** - Project GNSS displacements to Line-of-Sight direction
 5. **`plot_combined_time_series.py`** - Create comprehensive time series visualizations
 6. **`grid_amplitude_analysis.py`** - Optional grid-based spatial analysis
@@ -173,7 +171,9 @@ The workflow follows this strict sequential order:
 ## Key Data Dependencies
 
 ### Critical Files Created and Used:
-- **`parameters.csv`**: Created by `gnss_3d_vels.py` and updated by `filter_insar_save_parameters.py`
+- **`parameters.csv`**: Created by `gnss_3d_vels.py` and updated by:
+  - `filter_insar_save_parameters.py` (adds LOS components)
+  - `fit_plane_correct_insar.py` (adds plane coefficients and R² value)
 - **`_aligned.csv` file**: Created by `fit_plane_correct_insar.py`, used by `plot_combined_time_series.py`
 - **`_LOS.txt` files**: Created by `gnss_los_displ.py`, used by `plot_combined_time_series.py`
 
@@ -182,8 +182,9 @@ All scripts are controlled via environment variables set in `master.py`:
 - `DATA_DIR`: Base directory for all data
 - `INSAR_RADIUS`: Radius for InSAR point averaging
 - `MIN_TEMPORAL_COHERENCE`: Quality threshold for InSAR filtering
-- `USE_NNR_CORRECTED`: Advanced setting for GNSS file processing
 - `GNSS_PROVIDER`: Data provider for GNSS format handling
+- `INSAR_FILE`: Name of the InSAR CSV file
+- `STATIONS_FILE`: Name of the stations list file
 
 ## Input Requirements
 
@@ -198,22 +199,25 @@ C:/insar_gnss_data/
 ├── stations_list
 ├── [Station]_NEU_TIME.txt files
 ├── EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A.csv
+├── parameters.csv (created and updated by workflow)
+├── EGMS_L2a_088_0297_IW3_VV_2019_2023_1_A_aligned.csv (created by workflow)
 └── plots/ (created automatically)
 ```
 
 ## Output Products
 
 ### Generated Data Files:
-- Net-rotation-corrected GNSS time series (`_NNR.txt`)
-- Line-of-sight projected GNSS data (`_NNR_LOS.txt`)
+- Line-of-sight projected GNSS data (`_LOS.txt`)
 - Spatially aligned InSAR data (`_aligned.csv`)
-- Combined parameters file (`parameters.csv`)
-- Rotation vector estimates (`rotation_vector_omega.txt`)
+- Combined parameters file (`parameters.csv`) with:
+  - GNSS velocities
+  - InSAR LOS components
+  - Plane correction coefficients
+  - Plane fit R² value
 
 ### Visualization Outputs:
 - Individual GNSS displacement plots
-- NNR correction comparison plots
-- Spatial correction visualization
+- Spatial correction visualization with R² values
 - Combined velocity maps
 - Station-specific velocity maps
 - Time series comparison plots

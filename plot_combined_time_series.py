@@ -59,8 +59,7 @@ MIN_TEMPORAL_COHERENCE = float(os.getenv("MIN_TEMPORAL_COHERENCE", "0.7"))
 # Radius around GNSS stations to consider InSAR points (in meters)
 INSAR_RADIUS = int(os.getenv("INSAR_RADIUS", "250"))
 # Whether to use NNR-corrected files
-USE_NNR_CORRECTED = os.getenv("USE_NNR_CORRECTED", "True").lower() == "true"
-print(f"Using NNR-corrected files: {USE_NNR_CORRECTED}")
+# ETRS89 files are automatically prioritized if available, otherwise standard files are used
 
 # Configure matplotlib to use a non-interactive backend for better performance in multiprocessing
 plt.switch_backend('agg')
@@ -195,24 +194,25 @@ def create_station_time_series_plot(station_data):
     station_lon = station["longitude"]
     
     # Find GNSS file with LOS values for this station
-    if USE_NNR_CORRECTED:
-        # First try to find LOS files that came from NNR-corrected data
-        gnss_pattern = os.path.join(data_dir, f"{station_name}_NEU_TIME*_LOS.txt")
-        gnss_files = glob.glob(gnss_pattern)
-        
-        # If there are multiple LOS files, we'd prefer ones with more recent timestamps
-        gnss_files.sort(reverse=True)  # Sort by filename, reverse to get newest first
-        
-        if not gnss_files:
-            return f"GNSS LOS file not found for pattern: {gnss_pattern}. Skipping station {station_name}."
-            
+    # First check for ETRS89 LOS files (highest priority)
+    etrs89_pattern = os.path.join(data_dir, f"{station_name}_NEU_TIME*_ETRS89_LOS.txt")
+    etrs89_files = glob.glob(etrs89_pattern)
+    
+    if etrs89_files:
+        print(f"Found ETRS89 reference frame LOS file for {station_name}, using this file")
+        # If there are multiple files, prefer the most recent one
+        etrs89_files.sort(reverse=True)  # Sort by filename, reverse to get newest first
+        gnss_files = etrs89_files
     else:
-        # If we're not using NNR-corrected files, find normal LOS files
+        # Fall back to standard LOS files
         gnss_pattern = os.path.join(data_dir, f"{station_name}_NEU_TIME*_LOS.txt")
         gnss_files = glob.glob(gnss_pattern)
-        
-        if not gnss_files:
-            return f"GNSS file not found for pattern: {gnss_pattern}. Skipping station {station_name}."
+    
+    # If there are multiple files that match our criteria, sort by timestamp
+    if gnss_files:
+        gnss_files.sort(reverse=True)  # Sort by filename, reverse to get newest first
+    else:
+        return f"No suitable GNSS LOS file found for station {station_name}. Skipping."
             
     gnss_file = gnss_files[0]
     
@@ -459,44 +459,53 @@ def plot_station_map(station_data):
         before_points, before_velocities = filter_within_radius(before_df)
         after_points, after_velocities = filter_within_radius(after_df)
 
+        # Calculate global min/max for color scale
+        vmin = min(before_velocities.min(), after_velocities.min())
+        vmax = max(before_velocities.max(), after_velocities.max())
+
         # Create figure with two side-by-side subplots
         fig, axes = plt.subplots(1, 2, figsize=(16, 8), sharey=True)
-        
+
         # Subplot 1: Before alignment
         scatter1 = axes[0].scatter(before_points["longitude"], before_points["latitude"],
-                                  c=before_velocities, cmap="plasma", s=15, alpha=0.7)
+                                  c=before_velocities, cmap="plasma", s=15, alpha=0.7, vmin=vmin, vmax=vmax)
         axes[0].set_title("Before Alignment", fontsize=14)
-        axes[0].set_xlabel("Longitude", fontsize=12)
-        axes[0].set_ylabel("Latitude", fontsize=12)
+        axes[0].set_xlabel("Longitude (decimal degrees)", fontsize=12)
+        axes[0].set_ylabel("Latitude (decimal degrees)", fontsize=12)
         axes[0].grid(alpha=0.5)
-        fig.colorbar(scatter1, ax=axes[0], label="Velocity (mm/year)")
-        
+
         # Subplot 2: After alignment
         scatter2 = axes[1].scatter(after_points["longitude"], after_points["latitude"],
-                                  c=after_velocities, cmap="plasma", s=15, alpha=0.7)
+                                  c=after_velocities, cmap="plasma", s=15, alpha=0.7, vmin=vmin, vmax=vmax)
         axes[1].set_title("After Alignment", fontsize=14)
-        axes[1].set_xlabel("Longitude", fontsize=12)
+        axes[1].set_xlabel("Longitude (decimal degrees)", fontsize=12)
         axes[1].grid(alpha=0.5)
-        fig.colorbar(scatter2, ax=axes[1], label="Velocity (mm/year)")
-        
+
         # Add station marker and label to both subplots
         for ax in axes:
             ax.scatter(station_lon, station_lat, color="black", edgecolor="white", s=50, marker="^", zorder=5)
             ax.text(station_lon, station_lat, station_name,
                     color="black", fontsize=10, ha="left", va="bottom",
                     path_effects=[path_effects.withStroke(linewidth=1, foreground="white")])
-        
+
+
+        # Add a single horizontal colorbar below both subplots using a dedicated axes
+        # Adjust layout to make space for the colorbar
+        plt.tight_layout(rect=[0, 0.12, 1, 0.95])
+        colorbar_ax = fig.add_axes([0.25, 0.06, 0.5, 0.03])  # [left, bottom, width, height]
+        cbar = fig.colorbar(scatter1, cax=colorbar_ax, orientation='horizontal')
+        cbar.set_label("Velocity (mm/year)", fontsize=12)
+
         # Add title and save figure
         fig.suptitle(f"Velocity Map for Station {station_name}", fontsize=16)
         output_path = os.path.join(plots_dir, f"{station_name}_velocity_map.png")
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig(output_path, dpi=150)  # Lower DPI for faster saving
+        plt.savefig(output_path, dpi=150)
         plt.close(fig)
-        
+
         # Clean up memory
         del before_points, after_points, before_velocities, after_velocities
         gc.collect()
-        
+
         return f"Velocity map saved for station {station_name}: {output_path}"
     except Exception as e:
         return f"Error creating velocity map for station {station_name}: {str(e)}"

@@ -32,9 +32,13 @@ insar_name, insar_ext = os.path.splitext(INSAR_FILE)
 INSAR_FILE_ALIGNED = f"{insar_name}_aligned{insar_ext}"
 INSAR_PATH = os.path.join(DATA_DIR, INSAR_FILE_ALIGNED)
 
-# Parameters for the grid - default is 0.5 km but can be overridden
+# Parameters for the grid - using default values from chapter 4.3.1
 # This defines the resolution of the analysis grid
-GRID_SIZE_KM = float(os.getenv("GRID_SIZE_KM", "0.5"))
+GRID_SIZE_KM = float(os.getenv("GRID_SIZE_KM", "0.25"))  # Default single grid size
+# Default to use multiple grid sizes for analysis (0.25, 0.5, 1, 2, 3, 5 km)
+MULTI_RESOLUTION = os.getenv("MULTI_RESOLUTION", "True").lower() == "true"
+# Default grid sizes from chapter 4.3.1
+GRID_SIZES_KM = [0.25, 0.5, 1.0, 2.0, 3.0, 5.0]
 
 # Load InSAR data from the aligned file
 insar = pd.read_csv(INSAR_PATH)
@@ -225,10 +229,22 @@ def plot_grid_amplitude(grid_amplitude, lon_bins, lat_bins, vmin, vmax, DATA_DIR
     ax.set_ylabel('Latitude (decimal degrees)')
     ax.set_title(title)
     
-    # Increase pad parameter to create more space between colorbar and x-axis
-    # This improves readability of the colorbar labels
-    cbar = plt.colorbar(cax, orientation='horizontal', pad=0.15, shrink=0.75)
+    # Remove the default colorbar and create a dedicated axes below the map
+    # This makes the colorbar span exactly between the map's black borders and appear thinner
+    fig = plt.gcf()
+    ax_pos = ax.get_position()
+    cbar_height = 0.018  # Even thinner colorbar
+    cbar_space = 0.14    # Move colorbar further below x-label
+    cbar_pad = 0.018     # Further shorten colorbar width on both sides
+    cbar_ax = fig.add_axes([
+        ax_pos.x0 + cbar_pad,                 # left edge further inside map
+        ax_pos.y0 - cbar_space,               # further below the x-label
+        ax_pos.width - 2 * cbar_pad,          # even shorter than map width
+        cbar_height                           # thin colorbar
+    ])
+    cbar = plt.colorbar(cax, cax=cbar_ax, orientation='horizontal')
     cbar.set_label('Median Amplitude (mm)')
+    cbar.ax.tick_params(labelsize=9, size=0.5)
     
     # Add GNSS stations to the map if stations file exists
     # This provides reference points for comparing InSAR and GNSS data
@@ -262,7 +278,7 @@ def plot_grid_amplitude(grid_amplitude, lon_bins, lat_bins, vmin, vmax, DATA_DIR
     ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
     
     # Optimize layout and save the plot at high resolution
-    plt.tight_layout()
+    # Remove tight_layout to avoid warning with custom colorbar axes
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Plot saved to: {plot_path}")
@@ -657,18 +673,8 @@ def main():
     if multi_resolution:
         # Process multiple grid sizes to compare how spatial resolution affects results
         # This helps identify the best scale to capture displacement patterns
-        custom_grid_sizes = os.getenv("GRID_SIZES")
-        if custom_grid_sizes:
-            try:
-                # Parse comma-separated list of custom grid sizes from environment variable
-                grid_sizes = [float(x.strip()) for x in custom_grid_sizes.split(',')]
-                print(f"Using custom grid sizes: {grid_sizes}")
-            except ValueError:
-                print("Warning: Could not parse GRID_SIZES. Using default values.")
-                grid_sizes = [0.25, 0.5, 1.0, 1.5, 2.5, 5.0]  # Enhanced grid sizes in km
-        else:
-            # Default set of grid resolutions covering a wide range of scales
-            grid_sizes = [0.25, 0.5, 1.0, 1.5, 2.5, 5.0]  # Default grid sizes in km
+        print(f"Using grid sizes: {GRID_SIZES_KM}")
+        grid_sizes = GRID_SIZES_KM  # Use the globally defined grid sizes
         
         results = []
         

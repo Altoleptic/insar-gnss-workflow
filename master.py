@@ -1,5 +1,8 @@
 """
+
 Master Workflow Controller Script
+
+Repository: https://github.com/Altoleptic/insar-gnss-workflow
 
 This script is the central controller for the GNSS-InSAR data processing workflow.
 It coordinates the execution of all processing steps in the correct order, manages
@@ -34,7 +37,7 @@ os.environ["DATA_DIR"] = str(data_dir)
 # These parameters affect how the scripts operate - adjust as needed for your dataset
 os.environ["MIN_TEMPORAL_COHERENCE"] = "0.7"  # Minimum temporal coherence threshold (0-1)
 os.environ["INSAR_RADIUS"] = "250"            # Radius in meters for InSAR point averaging around GNSS stations
-os.environ["USE_NNR_CORRECTED"] = "False"     # Standard setting for stable release
+# Note: USE_NNR_CORRECTED has been removed as the workflow now automatically prioritizes files
 os.environ["GNSS_PROVIDER"] = "gfz"           # GNSS data provider ('gfz', 'usgs', etc.)
 
 # Set file names for INSAR and the stations_list.

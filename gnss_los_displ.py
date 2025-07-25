@@ -29,9 +29,7 @@ if not data_dir:
     print("Error: DATA_DIR environment variable is not set.")
     exit(1)
 
-# Check advanced file processing setting
-use_nnr = os.getenv("USE_NNR_CORRECTED", "False").lower() == "true"
-print(f"Advanced file processing enabled: {use_nnr}")
+# ETRS89 files are automatically prioritized if available, otherwise standard files are used
 
 # Ensure proper path formatting by converting to absolute path
 data_dir = os.path.abspath(data_dir)
@@ -166,33 +164,30 @@ def process_stations():
         station_name = first_word
         print(f"Processing station {station_name}...")
         
-        # Determine the input file pattern
-        # Check for advanced processing mode
-        if use_nnr:
-            gnss_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*_NNR.txt")
-            gnss_files = glob.glob(gnss_pattern)
-            
-            # If no specially processed files found, fall back to standard files
-            if not gnss_files:
-                print(f"No specially processed file found for {station_name}, using standard file")
-                gnss_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*.txt")
-                gnss_files = glob.glob(gnss_pattern)
+        # First, check for ETRS89 files (highest priority)
+        etrs89_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*_ETRS89.txt")
+        etrs89_files = glob.glob(etrs89_pattern)
+        
+        if etrs89_files:
+            print(f"Found ETRS89 reference frame file for {station_name}, using this file")
+            input_file = etrs89_files[0]
         else:
+            # Fall back to standard files
             gnss_pattern = os.path.join(gnss_folder, f"{station_name}_NEU_TIME*.txt")
             gnss_files = glob.glob(gnss_pattern)
-        
-        # Skip if no files found
-        if not gnss_files:
-            print(f"No GNSS data file found for station {station_name}, skipping")
-            continue
-        
-        # Use the first matching file
-        input_file = gnss_files[0]
+            
+            # Skip if no files found
+            if not gnss_files:
+                print(f"No GNSS data file found for station {station_name}, skipping")
+                continue
+            
+            # Use the first matching file
+            input_file = gnss_files[0]
         
         # Determine the output file name
         # Preserve any existing suffix in the filename
-        if "_NNR" in input_file:
-            output_file = input_file.replace("_NNR.txt", "_NNR_LOS.txt")
+        if "_ETRS89" in input_file:
+            output_file = input_file.replace("_ETRS89.txt", "_ETRS89_LOS.txt")
         else:
             output_file = input_file.replace(".txt", "_LOS.txt")
         

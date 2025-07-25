@@ -14,9 +14,10 @@ This repository is organized as follows:
 The workflow addresses several key challenges in GNSS-InSAR integration:
 
 1. **Spatial Alignment**: Corrects spatial biases between InSAR and GNSS measurements using plane fitting techniques.
-2. **Temporal Analysis**: Provides tools for comparing time series and analyzing seasonal patterns.
-3. **Visualization**: Offers comprehensive visualization capabilities for comparing data sources and understanding spatial patterns.
-4. **Extensibility**: Uses a modular approach for data loading to support different data providers.
+2. **Reference Frame Handling**: Implicitly addresses reference frame differences through plane-fitting correction.
+3. **Temporal Analysis**: Provides tools for comparing time series and analyzing seasonal patterns.
+4. **Visualization**: Offers comprehensive visualization capabilities for comparing data sources and understanding spatial patterns.
+5. **Extensibility**: Uses a modular approach for data loading to support different data providers.
 
 ### Key Features
 
@@ -53,7 +54,7 @@ The main script that orchestrates the entire workflow. Controls parameters via e
 
 - **`gnss_3d_vels.py`**: Processes GNSS 3D velocities.
 - **`filter_insar_save_parameters.py`**: Filters InSAR data based on temporal coherence and saves parameters.
-- **`fit_plane_correct_insar.py`**: Fits a plane to the InSAR data for spatial correction, aligning InSAR with GNSS observations.
+- **`fit_plane_correct_insar.py`**: Fits a plane to the InSAR data for spatial correction, aligning InSAR with GNSS observations. Includes calculation of R² (coefficient of determination) to assess the quality of the planar fit.
 - **`gnss_los_displ.py`**: Calculates GNSS displacements in the Line-of-Sight direction.
 
 ### Visualization Scripts
@@ -103,7 +104,6 @@ All parameters are set in `master.py` as environment variables:
 - **`DATA_DIR`**: Path to the data directory (default: "C:/insar_gnss_data")
 - **`MIN_TEMPORAL_COHERENCE`**: Minimum temporal coherence threshold (default: 0.7)
 - **`INSAR_RADIUS`**: Radius in meters for InSAR averaging around GNSS stations (default: 250m)
-- **`USE_NNR_CORRECTED`**: Advanced setting for GNSS file processing (default: False)
 - **`GNSS_PROVIDER`**: GNSS data provider to use ('gfz', 'usgs', etc.) (default: 'gfz')
 - **`INSAR_FILE`**: Name of the InSAR CSV file in the data directory
 - **`STATIONS_FILE`**: Name of the stations list file in the data directory
@@ -159,6 +159,24 @@ For very large datasets, you may need to adjust batch sizes or processing parame
 - **`GRID_SIZES`**: Comma-separated list of grid sizes in km to use when MULTI_RESOLUTION=True (default: "0.25, 0.5, 1.0, 2.0, 5.0")
 - **`INSAR_FILE`**: Name of the InSAR data file
 - **`STATIONS_FILE`**: Name of the GNSS stations list file
+
+## Reference Frame Handling
+
+Geodetic data sources often use different reference frames, which can complicate integration:
+
+- GNSS stations may use different reference frames depending on the provider (e.g., ETRS89 for SAPOS stations, ITRF2020 for GFZ stations)
+- InSAR data typically has its own relative reference frame
+
+Rather than applying explicit reference frame transformations, this workflow handles reference frame differences implicitly through the plane-fitting procedure in `fit_plane_correct_insar.py`. This approach:
+
+1. Computes the systematic differences between GNSS and InSAR measurements at GNSS station locations
+2. Fits a correction plane to these differences using least squares
+3. Calculates the R² (coefficient of determination) value to quantify the goodness-of-fit
+4. Applies this correction to the entire InSAR dataset
+
+The R² value indicates how well the planar model explains the spatial variation in LOS differences between GNSS and InSAR. Values closer to 1 suggest a better fit, though with few GNSS stations, R² should be interpreted cautiously as it may not fully represent the quality of the correction across the entire scene. The R² value is displayed in the spatial correction plot and saved in the parameters file.
+
+While not a rigorous geodetic transformation, this plane-fitting approach effectively aligns the datasets for practical analysis. The experimental version in the `alpha_nnr` directory includes more advanced reference frame handling using explicit net rotation removal if higher geodetic precision is required.
 
 ## Input Data Requirements
 

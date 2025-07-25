@@ -152,10 +152,18 @@ def process_stations():
         station_name = first_word
         print(f"Processing GNSS data for station {station_name}...")
         
-        # Find the input file
-        input_file = os.path.join(data_dir, f"{station_name}_NEU_TIME*.txt")
-        input_files = glob.glob(input_file)
+        # First, check for ETRS89 files (highest priority)
+        etrs89_pattern = os.path.join(data_dir, f"{station_name}_NEU_TIME*_ETRS89.txt")
+        etrs89_files = glob.glob(etrs89_pattern)
         
+        if etrs89_files:
+            print(f"Found ETRS89 reference frame file for {station_name}, using this file")
+            input_files = etrs89_files
+        else:
+            # Fall back to standard files if no ETRS89 file found
+            input_file = os.path.join(data_dir, f"{station_name}_NEU_TIME*.txt")
+            input_files = glob.glob(input_file)
+            
         if not input_files:
             print(f"No input file found for station {station_name}.")
             continue

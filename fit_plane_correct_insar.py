@@ -73,16 +73,31 @@ def fit_plane_to_los_differences(parameters_file, station_list_file):
 
     result = least_squares(residuals, [0, 0, 0], args=(lon, lat, los_diff))
     a, b, c = result.x
-
+    
+    # Calculate predicted values and R-squared
+    los_diff_predicted = plane_function([a, b, c], lon, lat)
+    ss_total = np.sum((los_diff - np.mean(los_diff))**2)
+    ss_residual = np.sum((los_diff - los_diff_predicted)**2)
+    r_squared = 1 - (ss_residual / ss_total) if ss_total > 0 else 0
+    
+    # Count of unique spatial locations (handling closely spaced stations)
+    station_coords = np.column_stack((lon, lat))
+    
     parameters_df["Plane Coefficient a"] = a
     parameters_df["Plane Coefficient b"] = b
     parameters_df["Plane Coefficient c"] = c
+    parameters_df["Plane Fit R-squared"] = r_squared
     parameters_df.to_csv(parameters_file, index=False)
 
     print(f"Plane coefficients added to {parameters_file}")
-    return a, b, c
+    print(f"Plane fit R-squared: {r_squared:.4f}")
+    
+    # Note: A high R² with few stations can be misleading as the plane might fit the sparse
+    # points well but not necessarily represent the true spatial pattern across the entire scene
+    
+    return a, b, c, r_squared
 
-def plot_spatial_correction(insar_df, spatial_correction, stations_file):
+def plot_spatial_correction(insar_df, spatial_correction, stations_file, r_squared=None):
     """Generates spatial correction plot and saves it."""
     os.makedirs(plots_dir, exist_ok=True)
     stations_df = pd.read_csv(stations_file, sep=r'\s+')
@@ -116,7 +131,10 @@ def plot_spatial_correction(insar_df, spatial_correction, stations_file):
     # Set labels and title
     ax.set_xlabel("Longitude (decimal degrees)")
     ax.set_ylabel("Latitude (decimal degrees)")
-    ax.set_title("Spatial Distribution of Correction Values")
+    title = "Spatial Distribution of Correction Values"
+    if r_squared is not None:
+        title += f" (R² = {r_squared:.3f})"
+    ax.set_title(title)
     
     # Create a legend with a yellow triangle matching the station markers
     from matplotlib.lines import Line2D
@@ -141,7 +159,7 @@ def plot_spatial_correction(insar_df, spatial_correction, stations_file):
     print(f"Spatial correction plot saved: {plot_path}")
     plt.close()
 
-def align_insar_to_gnss(insar_file, a, b, c, output_file, station_list_file):
+def align_insar_to_gnss(insar_file, a, b, c, r_squared, output_file, station_list_file):
     """Aligns InSAR LOS values to GNSS using plane coefficients."""
     insar_df = pd.read_csv(insar_file)
     time_columns = insar_df.columns[insar_df.columns.str.match(r"^\d{8}$")]
@@ -156,7 +174,7 @@ def align_insar_to_gnss(insar_file, a, b, c, output_file, station_list_file):
     insar_df.to_csv(output_file, index=False)
     print(f"Aligned InSAR data saved to {output_file}")
 
-    plot_spatial_correction(insar_df, spatial_correction, station_list_file)
+    plot_spatial_correction(insar_df, spatial_correction, station_list_file, r_squared)
 
 def main():
     """Main function to process InSAR and GNSS alignment."""
@@ -167,8 +185,8 @@ def main():
     print(f"Processing GNSS and InSAR alignment in {data_dir}...")
 
     calculate_los_difference(parameters_file)
-    a, b, c = fit_plane_to_los_differences(parameters_file, station_list_file)
-    align_insar_to_gnss(insar_file, a, b, c, output_file, station_list_file)
+    a, b, c, r_squared = fit_plane_to_los_differences(parameters_file, station_list_file)
+    align_insar_to_gnss(insar_file, a, b, c, r_squared, output_file, station_list_file)
 
     print("InSAR alignment completed successfully!")
 
